@@ -52,6 +52,10 @@ model, optimizer, _, _ = deepspeed.initialize(
 sampler = DistributedSampler(dataset)
 loader = DataLoader(dataset, batch_size=BATCH_SIZE, sampler=sampler, shuffle=False)
 
+# --- Checkpoint Saving Configuration ---
+save_directory = "./my_gpt2_checkpoint" 
+steps_per_checkpoint = 1000
+
 # Training loop
 model.train()
 for epoch in range(EPOCHS):
@@ -63,3 +67,17 @@ for epoch in range(EPOCHS):
         model.step()
         if step % 10 == 0:
             print(f"Epoch {epoch} Step {step}: Loss = {loss.item():.4f}")
+
+        # --- Save checkpoint periodically ---
+        if step > 0 and step % steps_per_checkpoint == 0:
+            print(f"Saving checkpoint at step {step} of epoch {epoch}")
+            # Ensure the tag identifies the step correctly, DeepSpeed might create subdirs
+            tag = f"global_step{epoch * len(loader) + step}" 
+            model.save_checkpoint(save_directory, tag=tag)
+            print(f"Checkpoint '{tag}' saved to {save_directory}")
+
+    # --- Save checkpoint at the end of each epoch ---
+    print(f"Saving checkpoint at end of epoch {epoch}")
+    tag = f"epoch_end_{epoch}" 
+    model.save_checkpoint(save_directory, tag=tag)
+    print(f"Checkpoint '{tag}' saved to {save_directory}")
