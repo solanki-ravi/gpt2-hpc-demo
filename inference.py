@@ -1,6 +1,7 @@
 import torch
 import deepspeed
 import argparse
+import os # Import os module
 from transformers import GPT2Config, GPT2LMHeadModel, GPT2TokenizerFast
 
 def main():
@@ -39,18 +40,36 @@ def main():
     print(f"Base model instantiated on CPU.")
 
     # --- Load Checkpoint ---
-    print(f"Loading model weights from checkpoint: {args.checkpoint_dir}")
-    # Use DeepSpeed's utility to load the checkpoint.
-    # `load_module_only=True` ensures only model weights are loaded, not optimizer states.
-    # The model state dict is loaded directly into the `model` instance provided.
-    load_path, client_states = deepspeed.load_checkpoint(
-        args.checkpoint_dir,
-        load_module_only=True,
-        client_state={'module': model} # Pass the model instance here
-    )
-    # No need to explicitly load state dict, deepspeed.load_checkpoint handles it.
-    print(f"Successfully loaded model weights from {load_path}")
+    print(f"Loading model weights from checkpoint directory: {args.checkpoint_dir}")
+    
+    # Construct path to the specific state dict file
+    # Adjust filename if necessary based on your checkpoint structure 
+    # (e.g., pytorch_model.bin, mp_rank_XX_model_states.pt)
+    state_dict_path = os.path.join(args.checkpoint_dir, 'mp_rank_00_model_states.pt') 
+    
+    if not os.path.exists(state_dict_path):
+        # Fallback for non-ZeRO or different saving formats
+        state_dict_path_alt = os.path.join(args.checkpoint_dir, 'pytorch_model.bin')
+        if os.path.exists(state_dict_path_alt):
+            state_dict_path = state_dict_path_alt
+        else:
+            raise FileNotFoundError(f"Could not find model state dict file at {state_dict_path} or {state_dict_path_alt}")
 
+    print(f"Loading state dict from: {state_dict_path}")
+    state_dict = torch.load(state_dict_path, map_location="cpu")
+
+    # Extract the model state dict - DeepSpeed often saves it under 'module'
+    if 'module' in state_dict:
+        model_state_dict = state_dict['module']
+    elif 'model' in state_dict: # Another common key
+        model_state_dict = state_dict['model']
+    else:
+        model_state_dict = state_dict # Assume it's the top-level object if no key matches
+
+    # Load the state dict into the base model
+    # set strict=False if there are mismatches (e.g., unexpected keys)
+    model.load_state_dict(model_state_dict, strict=False) 
+    print(f"Successfully loaded model weights from {state_dict_path}")
 
     # --- Prepare Model for Inference ---
     model.eval()
