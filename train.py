@@ -24,10 +24,6 @@ dataset = load_dataset("openwebtext", split="train[:1%]")  # ~50MB for test
 dataset = dataset.map(tokenize, batched=True)
 dataset.set_format(type='torch', columns=['input_ids'])
 
-# Add DistributedSampler
-sampler = DistributedSampler(dataset)
-loader = DataLoader(dataset, batch_size=BATCH_SIZE, sampler=sampler, shuffle=False)
-
 # Model config and init
 config = GPT2Config(
     vocab_size=tokenizer.vocab_size,
@@ -44,12 +40,17 @@ model = GPT2LMHeadModel(config)
 optimizer = DeepSpeedCPUAdam(model.parameters(), lr=1e-5)
 
 # DeepSpeed init
+# Initializes Distributed Process Group
 model, optimizer, _, _ = deepspeed.initialize(
     model=model,
     optimizer=optimizer,
     model_parameters=model.parameters(),
     config="deepspeed_config.json"
 )
+
+# Add DistributedSampler and DataLoader *after* DeepSpeed init
+sampler = DistributedSampler(dataset)
+loader = DataLoader(dataset, batch_size=BATCH_SIZE, sampler=sampler, shuffle=False)
 
 # Training loop
 model.train()
