@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
 from transformers import GPT2Config, GPT2LMHeadModel, GPT2TokenizerFast
 from datasets import load_dataset
 import deepspeed
@@ -22,7 +23,10 @@ def tokenize(example):
 dataset = load_dataset("openwebtext", split="train[:1%]")  # ~50MB for test
 dataset = dataset.map(tokenize, batched=True)
 dataset.set_format(type='torch', columns=['input_ids'])
-loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+
+# Add DistributedSampler
+sampler = DistributedSampler(dataset)
+loader = DataLoader(dataset, batch_size=BATCH_SIZE, sampler=sampler, shuffle=False)
 
 # Model config and init
 config = GPT2Config(
