@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 from transformers import GPT2Config, GPT2LMHeadModel, GPT2TokenizerFast
 from datasets import load_dataset
 import deepspeed
-import torch.optim as optim
+from deepspeed.ops.adam import DeepSpeedCPUAdam
 
 # Configuration
 SEQ_LEN = 1024
@@ -37,12 +37,12 @@ config = GPT2Config(
 model = GPT2LMHeadModel(config)
 
 # Define Optimizer
-optimizer = optim.AdamW(model.parameters(), lr=1e-5) # Example learning rate
+optimizer = DeepSpeedCPUAdam(model.parameters(), lr=1e-5)
 
 # DeepSpeed init
 model, optimizer, _, _ = deepspeed.initialize(
     model=model,
-    optimizer=optimizer, # Pass the optimizer here
+    optimizer=optimizer,
     model_parameters=model.parameters(),
     config="deepspeed_config.json"
 )
