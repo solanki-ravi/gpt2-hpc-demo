@@ -9,7 +9,7 @@ from deepspeed.ops.adam import DeepSpeedCPUAdam
 
 # Configuration
 SEQ_LEN = 1024
-BATCH_SIZE = 50
+BATCH_SIZE = 40
 EPOCHS = 3
 MODEL_NAME = "gpt2"
 
