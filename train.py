@@ -6,6 +6,7 @@ from transformers import GPT2Config, GPT2LMHeadModel, GPT2TokenizerFast
 from datasets import load_dataset
 import deepspeed
 from deepspeed.ops.adam import DeepSpeedCPUAdam
+from tqdm import tqdm
 
 # Configuration
 SEQ_LEN = 1024
@@ -23,7 +24,7 @@ def tokenize(example):
 
 print("Loading dataset...")
 # Load the initial portion
-full_dataset = load_dataset("openwebtext", split="train[:1%]")  # ~50MB for test. Modify split for full training.
+full_dataset = load_dataset("openwebtext", split="train[:10%]")  # ~50MB for test. Modify split for full training.
 
 print("Splitting dataset...")
 # Split into 80% train and 20% temp (for validation + test)
@@ -85,7 +86,10 @@ steps_per_checkpoint = 1000
 # Training loop
 model.train()
 for epoch in range(EPOCHS):
-    for step, batch in enumerate(train_loader):
+    print(f"\nEpoch {epoch+1}/{EPOCHS}")
+    # Wrap train_loader with tqdm for progress bar
+    progress_bar = tqdm(train_loader, desc=f"Epoch {epoch+1}") 
+    for step, batch in enumerate(progress_bar):
         inputs = batch['input_ids'].to(model.device)
         # --- Pass attention_mask to the model --- 
         attention_mask = batch['attention_mask'].to(model.device)
@@ -93,8 +97,9 @@ for epoch in range(EPOCHS):
         loss = outputs.loss
         model.backward(loss)
         model.step()
-        if step % 10 == 0:
-            print(f"Epoch {epoch} Step {step}: Loss = {loss.item():.4f}")
+        
+        # Update progress bar description with current loss
+        progress_bar.set_postfix(loss=f"{loss.item():.4f}")
 
         # --- Save checkpoint periodically ---
         if step > 0 and step % steps_per_checkpoint == 0:
