@@ -18,11 +18,35 @@ tokenizer = GPT2TokenizerFast.from_pretrained(MODEL_NAME)
 tokenizer.pad_token = tokenizer.eos_token
 
 def tokenize(example):
-    return tokenizer(example['text'], truncation=True, padding='max_length', max_length=SEQ_LEN)
+    # Ensure attention_mask is created
+    return tokenizer(example['text'], truncation=True, padding='max_length', max_length=SEQ_LEN, return_attention_mask=True)
 
-dataset = load_dataset("openwebtext", split="train[:1%]")  # ~50MB for test
-dataset = dataset.map(tokenize, batched=True)
-dataset.set_format(type='torch', columns=['input_ids'])
+print("Loading dataset...")
+# Load the initial portion
+full_dataset = load_dataset("openwebtext", split="train[:1%]")  # ~50MB for test. Modify split for full training.
+
+print("Splitting dataset...")
+# Split into 80% train and 20% temp (for validation + test)
+ds_train_val = full_dataset.train_test_split(test_size=0.2, seed=42) 
+# Split the 20% temp into 50% validation (10% of total) and 50% test (10% of total)
+ds_val_test = ds_train_val['test'].train_test_split(test_size=0.5, seed=42)
+
+train_dataset = ds_train_val['train']
+val_dataset = ds_val_test['train']
+test_dataset = ds_val_test['test']
+
+print(f"Dataset sizes: Train={len(train_dataset)}, Validation={len(val_dataset)}, Test={len(test_dataset)}")
+
+print("Tokenizing datasets...")
+train_dataset = train_dataset.map(tokenize, batched=True)
+val_dataset = val_dataset.map(tokenize, batched=True)
+test_dataset = test_dataset.map(tokenize, batched=True)
+
+print("Setting format...")
+data_columns = ['input_ids', 'attention_mask'] # Include attention_mask
+train_dataset.set_format(type='torch', columns=data_columns)
+val_dataset.set_format(type='torch', columns=data_columns)
+test_dataset.set_format(type='torch', columns=data_columns)
 
 # Model config and init
 config = GPT2Config(
@@ -48,9 +72,11 @@ model, optimizer, _, _ = deepspeed.initialize(
     config="deepspeed_config.json"
 )
 
-# Add DistributedSampler and DataLoader *after* DeepSpeed init
-sampler = DistributedSampler(dataset)
-loader = DataLoader(dataset, batch_size=BATCH_SIZE, sampler=sampler, shuffle=False)
+# Add DistributedSampler and DataLoaders *after* DeepSpeed init
+train_sampler = DistributedSampler(train_dataset)
+train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=train_sampler, shuffle=False)
+val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False) # No sampler for validation
+test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False) # No sampler for test
 
 # --- Checkpoint Saving Configuration ---
 save_directory = "./my_gpt2_checkpoint" 
@@ -59,9 +85,11 @@ steps_per_checkpoint = 1000
 # Training loop
 model.train()
 for epoch in range(EPOCHS):
-    for step, batch in enumerate(loader):
+    for step, batch in enumerate(train_loader):
         inputs = batch['input_ids'].to(model.device)
-        outputs = model(inputs, labels=inputs)
+        # --- Pass attention_mask to the model --- 
+        attention_mask = batch['attention_mask'].to(model.device)
+        outputs = model(inputs, attention_mask=attention_mask, labels=inputs)
         loss = outputs.loss
         model.backward(loss)
         model.step()
@@ -72,7 +100,7 @@ for epoch in range(EPOCHS):
         if step > 0 and step % steps_per_checkpoint == 0:
             print(f"Saving checkpoint at step {step} of epoch {epoch}")
             # Ensure the tag identifies the step correctly, DeepSpeed might create subdirs
-            tag = f"global_step{epoch * len(loader) + step}" 
+            tag = f"global_step{epoch * len(train_loader) + step}" # Use train_loader length
             model.save_checkpoint(save_directory, tag=tag)
             print(f"Checkpoint '{tag}' saved to {save_directory}")
 
