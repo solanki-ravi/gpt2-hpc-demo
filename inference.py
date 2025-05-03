@@ -4,7 +4,8 @@ import argparse
 from transformers import GPT2Config, GPT2LMHeadModel, GPT2TokenizerFast
 import os # Import os for environment variables
 import torch.distributed as dist # Import torch.distributed
-import torch.optim as optim # Import torch.optim
+# import torch.optim as optim # Remove this import
+from deepspeed.ops.adam import DeepSpeedCPUAdam # Import DeepSpeedCPUAdam
 
 def main():
     parser = argparse.ArgumentParser(description="Inference script for DeepSpeed trained GPT-2 model.")
@@ -51,16 +52,18 @@ def main():
     model = GPT2LMHeadModel(config)
     print(f"Base model instantiated on CPU.")
 
-    # --- Create a Dummy Optimizer (required by ZeRO Stage 2 init) ---
-    optimizer = optim.AdamW(model.parameters(), lr=1e-5) # Use same LR as config just in case
-    print("Created dummy optimizer for DeepSpeed initialization.")
+    # --- Create Optimizer Instance (required by ZeRO Stage 2 init) ---
+    # Use DeepSpeedCPUAdam as expected by the config with offloading
+    optimizer = DeepSpeedCPUAdam(model.parameters(), lr=1e-5)
+    # optimizer = optim.AdamW(model.parameters(), lr=1e-5) # Use same LR as config just in case
+    print("Created DeepSpeedCPUAdam optimizer for DeepSpeed initialization.")
 
     # --- Initialize DeepSpeed Engine ---
-    # Pass the dummy optimizer to satisfy ZeRO Stage 2 requirement
+    # Pass the DeepSpeedCPUAdam optimizer 
     print("Initializing DeepSpeed engine for loading...")
     model_engine, optimizer, _, _ = deepspeed.initialize(
         model=model,
-        optimizer=optimizer, # Pass the dummy optimizer
+        optimizer=optimizer, # Pass DeepSpeedCPUAdam
         config="deepspeed_config.json" # Provide path to config used during training
     )
     print("DeepSpeed engine initialized.")
