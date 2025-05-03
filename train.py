@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 # Configuration
 SEQ_LEN = 1024
-BATCH_SIZE = 40
+BATCH_SIZE = 2 # Align with train_micro_batch_size_per_gpu in DeepSpeed config
 EPOCHS = 3
 MODEL_NAME = "gpt2"
 
