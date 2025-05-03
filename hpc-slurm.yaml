@@ -14,13 +14,13 @@
 
 ---
 
-blueprint_name: hpc-slurm-gpt2demo-gpu
+blueprint_name: hpc-slurm-gpt2demo-gpu-g2
 
 vars:
   project_id:  ## Set GCP Project ID Here ##
-  deployment_name: hpc-slurm-gpt2demo-gpu
+  deployment_name: hpc-slurm-gpt2demo-gpu-g2
   region: us-central1
-  zone: us-central1-a
+  zone: us-central1-b
 
 # Documentation for each of the modules used below can be found at
 # https://github.com/GoogleCloudPlatform/hpc-toolkit/blob/main/modules/README.md
@@ -115,42 +115,25 @@ deployment_groups:
     - debug_partition
     - compute_partition
     - h3_partition
-    - a2_gpu_partition
     - g2_gpu_partition
     - homefs
     - slurm_login
     settings:
       enable_controller_public_ips: true
 
-  - id: a2_gpu_nodeset
-    source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
-    use: [network]
-    settings:
-      node_count_dynamic_max: 2
-      machine_type: a2-highgpu-1g
-      disk_type: pd-balanced
-      bandwidth_tier: gvnic_enabled
-      allow_automatic_updates: false
-
-  - id: a2_gpu_partition
-    source: community/modules/compute/schedmd-slurm-gcp-v6-partition
-    use:
-    - a2_gpu_nodeset
-    settings:
-      partition_name: a2gpu
-      # enable_job_exclusive is not a valid key; Slurm behavior should be controlled via job submission flags
-
   - id: g2_gpu_nodeset
     source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
     use: [network]
     settings:
-      node_count_dynamic_max: 2 # Adjust as needed
+      node_count_dynamic_max: 1 # Adjust as needed
       machine_type: g2-standard-4
       # G2 instances require specifying the GPU type (NVIDIA L4)
       disk_type: pd-balanced
       bandwidth_tier: gvnic_enabled
       allow_automatic_updates: false
       # Need to install NVIDIA drivers
+      metadata:
+        install-nvidia-driver: true
       # Specify COS image family for GPU nodes
 
   - id: g2_gpu_partition
