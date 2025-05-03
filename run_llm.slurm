@@ -29,14 +29,17 @@ echo "Running in directory: $(pwd)"
 # but typically dependencies are shared via the filesystem (/home/ubuntu)
 # A simple pip install might suffice if the shared filesystem is reliable.
 echo "Installing dependencies..."
-pip install -r requirements.txt
+# Use pip3 and install to user directory
+pip3 install --user -r requirements.txt
+# Add user's local bin to PATH for scripts installed by pip
+export PATH=$HOME/.local/bin:$PATH
 echo "Dependencies installed."
 
 # --- Distributed Training Setup ---
 # Get the master node's IP address
 export MASTER_ADDR=$(scontrol show hostnames $SLURM_NODELIST | head -n 1)
-# Get a free port
-export MASTER_PORT=$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()') 
+# Get a free port (use python3)
+export MASTER_PORT=$(python3 -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()')
 
 echo "MASTER_ADDR: $MASTER_ADDR"
 echo "MASTER_PORT: $MASTER_PORT"
@@ -45,7 +48,8 @@ echo "MASTER_PORT: $MASTER_PORT"
 # torchrun handles rank assignment based on srun context
 # Remove --node_rank and potentially unnecessary --deepspeed flag
 echo "Launching training..."
-srun --label torchrun \
+# Use python3 -m torch.distributed.run instead of just torchrun
+srun --label python3 -m torch.distributed.run \
   --nproc_per_node $SLURM_GPUS_PER_NODE \
   --nnodes $SLURM_JOB_NUM_NODES \
   --rdzv_id $SLURM_JOB_ID \
