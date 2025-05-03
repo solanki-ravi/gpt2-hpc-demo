@@ -38,8 +38,9 @@ train_dataset = ds_train_val['train']
 val_dataset = ds_val_test['train']
 test_dataset = ds_val_test['test']
 
-print(f"Dataset sizes: Train={len(train_dataset)}, Validation={len(val_dataset)},
-      Test={len(test_dataset)}")
+# Construct the message string first
+dataset_sizes_str = f"Dataset sizes: Train={len(train_dataset)}, Validation={len(val_dataset)}, Test={len(test_dataset)}"
+print(dataset_sizes_str)
 
 print("Tokenizing datasets...")
 train_dataset = train_dataset.map(tokenize, batched=True)
