@@ -67,13 +67,13 @@ config = GPT2Config(
 model = GPT2LMHeadModel(config)
 
 # Define Optimizer - Use standard AdamW
-optimizer = optim.AdamW(model.parameters(), lr=1e-5)
+# optimizer = optim.AdamW(model.parameters(), lr=1e-5) # REMOVE: Let DeepSpeed create optimizer from config
 
 # DeepSpeed init
 # Initializes Distributed Process Group
 model, optimizer, _, _ = deepspeed.initialize(
     model=model,
-    optimizer=optimizer,
+    # optimizer=optimizer, # REMOVE: Let DeepSpeed create optimizer from config
     model_parameters=model.parameters(),
     config="deepspeed_config.json"
 )
