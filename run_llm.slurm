@@ -29,6 +29,9 @@ echo "Running in directory: $(pwd)"
 # but typically dependencies are shared via the filesystem (/home/ubuntu)
 # A simple pip install might suffice if the shared filesystem is reliable.
 echo "Installing dependencies..."
+# Check Python version
+echo "Python version:"
+python3 --version
 # Use pip3 and install to user directory
 pip3 install --user -r requirements.txt
 # Add user's local bin to PATH for scripts installed by pip
