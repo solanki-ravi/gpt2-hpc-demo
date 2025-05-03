@@ -9,8 +9,6 @@ For information on the training architecture, please refer to the following diag
 
 The model was trained on 8 g2-standard-4 cluster instances (NVIDIA L4s). More information on GCP G4 instances can be found here: https://cloud.google.com/compute/docs/gpus/#l4-gpus
 
-
-
 The model could easily be launched on more powerful H{1|2}00 instances on GCP, by defiing the appropriate node configuration (hpc-slurm.yaml).
 
 ## Files
@@ -71,7 +69,6 @@ sbatch --export=ALL,EPOCHS=3,DATA_PERCENTAGE=25,CHECKPOINT_DIR="/fsx/my_training
 
 *   Check job status: `squeue -u $USER`
 *   Check output: `cat slurm-<job_id>.out`
-<<<<<<< HEAD
 *   Check errors: `cat slurm-<job_id>.err`
 
 ## Running on a Multi-GPU Node
@@ -103,7 +100,4 @@ The current configuration requests and assumes a single GPU per node (`g2-standa
           ...
         }
         ```
-    *   If you don't adjust this, your global batch size will increase proportionally to the number of GPUs. 
-=======
-*   Check errors: `cat slurm-<job_id>.err` 
->>>>>>> 0e3ef52e89a93901cd1af8875fa072bcfd10fd2b
+    *   If you don't adjust this, your global batch size will increase proportionally to the number of GPUs.
