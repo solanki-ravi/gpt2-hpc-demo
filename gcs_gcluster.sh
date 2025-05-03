@@ -15,4 +15,4 @@ gcloud compute ssh head-0 --zone=us-central1-a
 srun -N 3 hostname
 
 # destroy the cluster
-./gcluster destroy hpc-slurm --auto-approve
+./gcluster destroy hpc-slurm-gpt2demo --auto-approve

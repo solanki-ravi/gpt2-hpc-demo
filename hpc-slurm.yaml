@@ -132,13 +132,15 @@ deployment_groups:
       bandwidth_tier: gvnic_enabled
       allow_automatic_updates: false
       # Need to install NVIDIA drivers
-      metadata:
-        startup-script: |
-          #!/bin/bash
-          echo "Running startup script to install build tools..."
-          apt-get update -y
-          apt-get install -y build-essential ninja-build
-          echo "Finished installing build tools."
+      # --- Use Google Cloud HPC Image ---
+      instance_image_custom: true
+      instance_image:
+        name: hpc-rocky-linux-8-v20240126
+        project: cloud-hpc-image-public
+      # --- Remove conflicting metadata ---
+      # metadata:
+      #   startup-script: |
+      #     ...
       # Specify COS image family for GPU nodes
 
   - id: g2_gpu_partition
