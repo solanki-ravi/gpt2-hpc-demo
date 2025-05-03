@@ -8,12 +8,31 @@ from datasets import load_dataset
 import deepspeed
 from deepspeed.ops.adam import DeepSpeedCPUAdam
 from tqdm import tqdm
+import argparse # Import argparse
+import os # Import os for path manipulation
 
-# Configuration
+# --- Argument Parsing ---
+def parse_args():
+    parser = argparse.ArgumentParser(description="GPT-2 training script with DeepSpeed")
+    parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs")
+    parser.add_argument("--checkpoint_dir", type=str, default="./my_gpt2_checkpoint", help="Directory to save checkpoints")
+    parser.add_argument("--data_percentage", type=int, default=10, help="Percentage of train split to use (1-100)")
+    parser.add_argument('--deepspeed_config', type=str, required=True, help='Path to deepspeed config file') # Keep existing deepspeed arg
+    # Add other args from deepspeed launcher if necessary, though usually handled by deepspeed.initialize
+    return parser.parse_args()
+
+args = parse_args()
+
+# Configuration (now mostly from args)
 SEQ_LEN = 1024
 BATCH_SIZE = 2 # Align with train_micro_batch_size_per_gpu in DeepSpeed config
-EPOCHS = 3
+EPOCHS = args.epochs # Use arg
 MODEL_NAME = "gpt2"
+save_directory = args.checkpoint_dir # Use arg
+
+# Ensure checkpoint directory exists (only on rank 0)
+if dist.is_initialized() and dist.get_rank() == 0:
+    os.makedirs(save_directory, exist_ok=True)
 
 # Load tokenizer and dataset
 tokenizer = GPT2TokenizerFast.from_pretrained(MODEL_NAME)
@@ -26,8 +45,11 @@ def tokenize(example):
                      return_attention_mask=True)
 
 print("Loading dataset...")
-# Load the initial portion
-full_dataset = load_dataset("openwebtext", split="train[:1%]")  # ~40GB
+# Load the initial portion using data_percentage arg
+data_split_string = f"train[:{args.data_percentage}%]"
+print(f"Loading split: {data_split_string}")
+full_dataset = load_dataset("openwebtext", split=data_split_string)
+print(f"Actual loaded dataset size: {len(full_dataset)}")
 
 print("Splitting dataset...")
 # Split into 80% train and 20% temp (for validation + test)
@@ -87,7 +109,6 @@ val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
 # --- Checkpoint Saving Configuration ---
-save_directory = "./my_gpt2_checkpoint"
 steps_per_checkpoint = 1000
 
 # Training loop

@@ -10,6 +10,13 @@
 #SBATCH --output=slurm-%j.out     # Standard output file
 #SBATCH --error=slurm-%j.err      # Standard error file
 
+# --- Configurable Parameters ---
+# (Can be overridden via sbatch --export=EPOCHS=5,...) 
+export JOB_EPOCHS="${EPOCHS:-10}" # Default to 10 if EPOCHS env var not set
+export JOB_CHECKPOINT_DIR="${CHECKPOINT_DIR:-./my_gpt2_checkpoint}" # Default if CHECKPOINT_DIR not set
+export JOB_DATA_PERCENTAGE="${DATA_PERCENTAGE:-10}" # Default to 10% if DATA_PERCENTAGE not set
+# -----------------------------
+
 # --- Environment Setup ---
 # Change to the directory where the job was submitted from
 cd $SLURM_SUBMIT_DIR
@@ -61,7 +68,11 @@ srun --label python3 -m torch.distributed.run \
   --rdzv_id $SLURM_JOB_ID \
   --rdzv_backend c10d \
   --rdzv_endpoint $MASTER_ADDR:$MASTER_PORT \
-  train.py --deepspeed_config deepspeed_config.json
+  train.py \
+    --deepspeed_config deepspeed_config.json \
+    --epochs "$JOB_EPOCHS" \
+    --checkpoint_dir "$JOB_CHECKPOINT_DIR" \
+    --data_percentage "$JOB_DATA_PERCENTAGE"
 
 echo "Training script finished."
 
