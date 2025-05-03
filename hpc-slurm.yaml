@@ -14,11 +14,11 @@
 
 ---
 
-blueprint_name: hpc-slurm-gpt2demo
+blueprint_name: hpc-slurm-gpt2demo-gpu
 
 vars:
   project_id:  ## Set GCP Project ID Here ##
-  deployment_name: hpc-slurm-gpt2demo
+  deployment_name: hpc-slurm-gpt2demo-gpu
   region: us-central1
   zone: us-central1-a
 
