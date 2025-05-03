@@ -55,7 +55,7 @@ deployment_groups:
     settings:
       node_count_dynamic_max: 4
       machine_type: n2-standard-2
-      allow_automatic_updates: false
+      allow_automatic_updates: true
 
   - id: debug_partition
     source: community/modules/compute/schedmd-slurm-gcp-v6-partition
@@ -72,7 +72,7 @@ deployment_groups:
     settings:
       node_count_dynamic_max: 5
       bandwidth_tier: gvnic_enabled
-      allow_automatic_updates: false
+      allow_automatic_updates: true
 
   - id: compute_partition
     source: community/modules/compute/schedmd-slurm-gcp-v6-partition
@@ -92,7 +92,7 @@ deployment_groups:
       # https://cloud.google.com/compute/docs/compute-optimized-machines#h3_disks
       disk_type: pd-balanced
       bandwidth_tier: gvnic_enabled
-      allow_automatic_updates: false
+      allow_automatic_updates: true
 
   - id: h3_partition
     source: community/modules/compute/schedmd-slurm-gcp-v6-partition
@@ -130,7 +130,7 @@ deployment_groups:
       # G2 instances require specifying the GPU type (NVIDIA L4)
       disk_type: pd-balanced
       bandwidth_tier: gvnic_enabled
-      allow_automatic_updates: false
+      allow_automatic_updates: true
       # Need to install NVIDIA drivers
       # --- Remove conflicting metadata ---
       # metadata:
