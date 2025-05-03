@@ -8,3 +8,4 @@ deepspeed==0.16.7
 accelerate==0.25.0
 tokenizers==0.15.0
 numpy==1.26.4       # ✅ Avoids incompatibility with PyTorch
+tqdm

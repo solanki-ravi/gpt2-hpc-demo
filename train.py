@@ -24,7 +24,7 @@ def tokenize(example):
 
 print("Loading dataset...")
 # Load the initial portion
-full_dataset = load_dataset("openwebtext", split="train[:10%]")  # ~50MB for test. Modify split for full training.
+full_dataset = load_dataset("openwebtext", split="train[:100%]")  # ~40GB for test. Modify split for full training.
 
 print("Splitting dataset...")
 # Split into 80% train and 20% temp (for validation + test)
