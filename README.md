@@ -101,3 +101,36 @@ The current configuration requests and assumes a single GPU per node (`g2-standa
         }
         ```
     *   If you don't adjust this, your global batch size will increase proportionally to the number of GPUs.
+   
+## Optimizations:
+Apply the following optimizations to maximize MFU.
+
+### Batch size:
+
+1. **Adjust `train_micro_batch_size_per_gpu`:**
+
+   ```
+   nvidia-smi 
+   Sat May  3 16:50:52 2025       
+   +-----------------------------------------------------------------------------------------+
+   | NVIDIA-SMI 550.90.12              Driver Version: 550.90.12      CUDA Version: 12.4     |
+   |-----------------------------------------+------------------------+----------------------+
+   | GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+   | Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+   |                                         |                        |               MIG M. |
+   |=========================================+========================+======================|
+   |   0  NVIDIA L4                      On  |   00000000:00:03.0 Off |                    0 |
+   | N/A   76C    P0             62W /   72W |    6483MiB /  23034MiB |     82%      Default |
+   |                                         |                        |                  N/A |
+   +-----------------------------------------+------------------------+----------------------+
+                                                                                            
+   +-----------------------------------------------------------------------------------------+
+   | Processes:                                                                              |
+   |  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+   |        ID   ID                                                               Usage      |
+   |=========================================================================================|
+   |    0   N/A  N/A      2156      C   /usr/bin/python3                             6474MiB |
+   +-----------------------------------------------------------------------------------------+
+
+   train_micro_batch_size_per_gpu = 2 > train_micro_batch_size_per_gpu = 6
+   ```
