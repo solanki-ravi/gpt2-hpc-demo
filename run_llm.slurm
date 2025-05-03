@@ -1,11 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=gpt2-train
-#SBATCH --nodes=4
-#SBATCH --ntasks-per-node=8       # Should match number of GPUs per node
-#SBATCH --gpus-per-node=8         # Request 8 GPUs per node (matches g4dn.8xlarge if that's what was used)
-#SBATCH --cpus-per-task=8         # Adjust based on instance type and data loading needs
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1       # Should match number of GPUs per node
+#SBATCH --gres=gpu:1
+#SBATCH --gpus-per-node=1         # Request 1 GPUs per node (matches g2-standard-4)
+#SBATCH --cpus-per-task=4         # Adjust based on instance type and data loading needs
 #SBATCH --time=06:00:00           # Adjust job time limit as needed
-#SBATCH --partition=compute       # Matches the queue name in cluster-config.yaml
+#SBATCH --partition=g2gpu         # Matches the queue name in cluster-config.yaml
 #SBATCH --output=slurm-%j.out     # Standard output file
 #SBATCH --error=slurm-%j.err      # Standard error file
 
