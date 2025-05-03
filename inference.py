@@ -43,10 +43,12 @@ def main():
     # Note: This will initialize distributed backend if run via torchrun/deepspeed launcher
     # but should work for single process loading too.
     # If running only on CPU for inference, adjust config accordingly.
+    # Pass dist_init_required=False when running single-process inference.
     print("Initializing DeepSpeed engine for loading...")
     model_engine, optimizer, _, _ = deepspeed.initialize(
         model=model,
-        config="deepspeed_config.json" # Provide path to config used during training
+        config="deepspeed_config.json", # Provide path to config used during training
+        dist_init_required=False       # Set to False for single-process inference
     )
     print("DeepSpeed engine initialized.")
 
