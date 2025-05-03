@@ -21,8 +21,9 @@ def main():
     os.environ['MASTER_PORT'] = '9994' # Default port, modify if needed
     os.environ['RANK'] = '0'
     os.environ['WORLD_SIZE'] = '1'
+    os.environ['LOCAL_RANK'] = '0' # Add LOCAL_RANK for DeepSpeed
     dist.init_process_group(backend='gloo')
-    print("Manually initialized torch.distributed (rank 0, world 1)")
+    print("Manually initialized torch.distributed (rank 0, world 1, local_rank 0)")
     # ---------------------------------------------------------------
 
     # --- Model Configuration (must match training) ---
