@@ -1,6 +1,17 @@
-# GPT-2 Training with DeepSpeed on Slurm
+# GPT-2 Training with DeepSpeed on Slurm and GCP HPC Clusters
 
 This project contains scripts to train a GPT-2 language model using DeepSpeed for efficient distributed training on a Slurm cluster managed by the Google Cloud HPC Toolkit.
+
+For more information about GCP HPC Clusters, please refer to: https://cloud.google.com/solutions/hpc?hl=en
+For a tutorial on GCP HPC Cluster with Slurm, please refer to: https://codelabs.developers.google.com/codelabs/hpc-slurm-on-gcp#0
+
+For information on the training architecture, please refer to the following diagram.
+
+The model was trained on 8 g2-standard-4 cluster instances (NVIDIA L4s). More information on GCP G4 instances can be found here: https://cloud.google.com/compute/docs/gpus/#l4-gpus
+
+
+
+The model could easily be launched on more powerful H{1|2}00 instances on GCP, by defiing the appropriate node configuration (hpc-slurm.yaml).
 
 ## Files
 
