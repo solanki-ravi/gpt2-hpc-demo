@@ -9,3 +9,4 @@ accelerate==0.25.0
 tokenizers==0.15.0
 numpy<1.25       # Use version compatible with Python 3.8
 tqdm
+networkx<3.0    # Use version compatible with Python 3.8
