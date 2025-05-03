@@ -71,6 +71,37 @@ sbatch --export=ALL,EPOCHS=3,DATA_PERCENTAGE=25,CHECKPOINT_DIR="/fsx/my_training
 *   Check output: `cat slurm-<job_id>.out`
 *   Check errors: `cat slurm-<job_id>.err`
 
+## Cluster Management Script (`manage_cluster.sh`)
+
+A helper script `manage_cluster.sh` is provided to simplify creating and destroying the cluster using the HPC Toolkit.
+
+**Prerequisites:**
+
+*   Ensure the `ghpc` executable is in your current directory or PATH.
+*   Ensure the blueprint file (`hpc-slurm.yaml`) is in the current directory.
+*   Make the script executable:
+    ```bash
+    chmod +x manage_cluster.sh
+    ```
+*   Set your Google Cloud Project ID as an environment variable:
+    ```bash
+    export PROJECT_ID="your-gcp-project-id"
+    ```
+
+**Usage:**
+
+*   **Create Cluster:**
+    ```bash
+    ./manage_cluster.sh create <your_deployment_name>
+    ```
+    *(Replace `<your_deployment_name>` with the `deployment_name` from `hpc-slurm.yaml`, e.g., `hpc-slurm-gpt2demo-gpu-g2-deepspeed`)*
+
+*   **Destroy Cluster:**
+    ```bash
+    ./manage_cluster.sh destroy <your_deployment_name>
+    ```
+    *(Replace `<your_deployment_name>` accordingly)*
+
 ## Running on a Multi-GPU Node
 
 The current configuration requests and assumes a single GPU per node (`g2-standard-4`). To run on a node with multiple GPUs (e.g., an `a2-highgpu-4g` with 4 GPUs), you need to make the following adjustments:
