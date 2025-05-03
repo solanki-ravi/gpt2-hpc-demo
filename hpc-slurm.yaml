@@ -14,11 +14,11 @@
 
 ---
 
-blueprint_name: hpc-slurm-gpt2demo-gpu-g2
+blueprint_name: hpc-slurm-gpt2demo-gpu-g2-deepspeed
 
 vars:
   project_id:  ## Set GCP Project ID Here ##
-  deployment_name: hpc-slurm-gpt2demo-gpu-g2
+  deployment_name: hpc-slurm-gpt2demo-gpu-g2-deepspeed
   region: us-central1
   zone: us-central1-a
 
@@ -125,7 +125,7 @@ deployment_groups:
     source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
     use: [network]
     settings:
-      node_count_dynamic_max: 1 # Adjust as needed
+      node_count_dynamic_max: 4 # Adjust as needed
       machine_type: g2-standard-4
       # G2 instances require specifying the GPU type (NVIDIA L4)
       disk_type: pd-balanced
