@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
+import torch.distributed as dist
 from transformers import GPT2Config, GPT2LMHeadModel, GPT2TokenizerFast
 from datasets import load_dataset
 import deepspeed
@@ -107,22 +108,29 @@ for epoch in range(EPOCHS):
         # Update progress bar description with current loss
         progress_bar.set_postfix(loss=f"{loss.item():.4f}")
 
-        # --- Save checkpoint periodically ---
+        # --- Save checkpoint periodically (only on rank 0) ---
         if step > 0 and step % steps_per_checkpoint == 0:
-            print(f"Saving checkpoint at step {step} of epoch {epoch}")
-            # Ensure the tag identifies the step correctly, DeepSpeed might create subdirs
-            tag = f"global_step{epoch * len(train_loader) + step}" # Use train_loader length
-            model.save_checkpoint(save_directory, tag=tag)
-            print(f"Checkpoint '{tag}' saved to {save_directory}")
+            # --- Ensure distributed setup is initialized before checking rank --- 
+            # (deepspeed.initialize already handles this)
+            if dist.get_rank() == 0:
+                print(f"Rank {dist.get_rank()} saving checkpoint at step {step} of epoch {epoch}")
+                # Ensure the tag identifies the step correctly, DeepSpeed might create subdirs
+                tag = f"global_step{epoch * len(train_loader) + step}" # Use train_loader length
+                model.save_checkpoint(save_directory, tag=tag)
+                print(f"Rank {dist.get_rank()} checkpoint '{tag}' saved to {save_directory}")
 
-    # --- Save checkpoint at the end of each epoch ---
-    print(f"Saving checkpoint at end of epoch {epoch}")
-    tag = f"epoch_end_{epoch}" 
-    model.save_checkpoint(save_directory, tag=tag)
-    print(f"Checkpoint '{tag}' saved to {save_directory}")
+    # --- Save checkpoint at the end of each epoch (only on rank 0) ---
+    # --- Ensure distributed setup is initialized before checking rank ---
+    if dist.get_rank() == 0:
+        print(f"Rank {dist.get_rank()} saving checkpoint at end of epoch {epoch}")
+        tag = f"epoch_end_{epoch}" 
+        model.save_checkpoint(save_directory, tag=tag)
+        print(f"Rank {dist.get_rank()} checkpoint '{tag}' saved to {save_directory}")
 
-# --- Save final checkpoint ---
-print("Saving final checkpoint")
+# --- Save final checkpoint (only on rank 0) ---
+# --- Ensure distributed setup is initialized before checking rank ---
+if dist.get_rank() == 0:
+    print(f"Rank {dist.get_rank()} saving final checkpoint")
 tag = "final_checkpoint"
 model.save_checkpoint(save_directory, tag=tag)
-print(f"Checkpoint '{tag}' saved to {save_directory}")
+print(f"Rank {dist.get_rank()} checkpoint '{tag}' saved to {save_directory}")
