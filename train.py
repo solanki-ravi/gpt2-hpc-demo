@@ -20,11 +20,13 @@ tokenizer.pad_token = tokenizer.eos_token
 
 def tokenize(example):
     # Ensure attention_mask is created
-    return tokenizer(example['text'], truncation=True, padding='max_length', max_length=SEQ_LEN, return_attention_mask=True)
+    return tokenizer(example['text'], truncation=True, 
+                     padding='max_length', max_length=SEQ_LEN,
+                     return_attention_mask=True)
 
 print("Loading dataset...")
 # Load the initial portion
-full_dataset = load_dataset("openwebtext", split="train[:100%]")  # ~40GB for test. Modify split for full training.
+full_dataset = load_dataset("openwebtext", split="train[:10%]")  # ~40GB
 
 print("Splitting dataset...")
 # Split into 80% train and 20% temp (for validation + test)
@@ -36,7 +38,8 @@ train_dataset = ds_train_val['train']
 val_dataset = ds_val_test['train']
 test_dataset = ds_val_test['test']
 
-print(f"Dataset sizes: Train={len(train_dataset)}, Validation={len(val_dataset)}, Test={len(test_dataset)}")
+print(f"Dataset sizes: Train={len(train_dataset)}, Validation={len(val_dataset)},
+      Test={len(test_dataset)}")
 
 print("Tokenizing datasets...")
 train_dataset = train_dataset.map(tokenize, batched=True)
@@ -75,12 +78,14 @@ model, optimizer, _, _ = deepspeed.initialize(
 
 # Add DistributedSampler and DataLoaders *after* DeepSpeed init
 train_sampler = DistributedSampler(train_dataset)
-train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=train_sampler, shuffle=False)
-val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False) # No sampler for validation
-test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False) # No sampler for test
+train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=train_sampler,
+                          shuffle=False)
+# No sampler for validation and test
+val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
+test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
 # --- Checkpoint Saving Configuration ---
-save_directory = "./my_gpt2_checkpoint" 
+save_directory = "./my_gpt2_checkpoint"
 steps_per_checkpoint = 1000
 
 # Training loop
@@ -114,3 +119,9 @@ for epoch in range(EPOCHS):
     tag = f"epoch_end_{epoch}" 
     model.save_checkpoint(save_directory, tag=tag)
     print(f"Checkpoint '{tag}' saved to {save_directory}")
+
+# --- Save final checkpoint ---
+print("Saving final checkpoint")
+tag = "final_checkpoint"
+model.save_checkpoint(save_directory, tag=tag)
+print(f"Checkpoint '{tag}' saved to {save_directory}")
