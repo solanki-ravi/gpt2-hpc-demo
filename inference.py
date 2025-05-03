@@ -2,6 +2,8 @@ import torch
 import deepspeed
 import argparse
 from transformers import GPT2Config, GPT2LMHeadModel, GPT2TokenizerFast
+import os # Import os for environment variables
+import torch.distributed as dist # Import torch.distributed
 
 def main():
     parser = argparse.ArgumentParser(description="Inference script for DeepSpeed trained GPT-2 model.")
@@ -11,6 +13,17 @@ def main():
     parser.add_argument("--device", type=str, default="cuda:0" if torch.cuda.is_available() else "cpu", help="Device to run inference on (e.g., 'cuda:0', 'cpu')")
     parser.add_argument("--max_new_tokens", type=int, default=50, help="Maximum number of new tokens to generate")
     args = parser.parse_args()
+
+    # --- Manually Initialize Distributed Backend (for single process) ---
+    # DeepSpeed requires this even for single process if using ZeRO features,
+    # and doing it manually prevents the mpi4py auto-detect issue.
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '9994' # Default port, modify if needed
+    os.environ['RANK'] = '0'
+    os.environ['WORLD_SIZE'] = '1'
+    dist.init_process_group(backend='gloo')
+    print("Manually initialized torch.distributed (rank 0, world 1)")
+    # ---------------------------------------------------------------
 
     # --- Model Configuration (must match training) ---
     # Known issue: tokenizer.vocab_size might need adjustment depending on how it was saved/loaded.
@@ -36,19 +49,13 @@ def main():
     model = GPT2LMHeadModel(config)
     print(f"Base model instantiated on CPU.")
 
-    # --- Initialize DeepSpeed Engine (needed for loading) ---
-    # Use the training config to ensure model structure/ZeRO info is available
-    # Minimal inference config might work if not loading ZeRO state, but using
-    # the training config is safer for checkpoint compatibility.
-    # Note: This will initialize distributed backend if run via torchrun/deepspeed launcher
-    # but should work for single process loading too.
-    # If running only on CPU for inference, adjust config accordingly.
-    # Pass dist_init_required=False when running single-process inference.
+    # --- Initialize DeepSpeed Engine ---
+    # Now that torch.distributed is init, deepspeed should find it.
+    # Remove dist_init_required=False or set to True (default).
     print("Initializing DeepSpeed engine for loading...")
     model_engine, optimizer, _, _ = deepspeed.initialize(
         model=model,
-        config="deepspeed_config.json", # Provide path to config used during training
-        dist_init_required=False       # Set to False for single-process inference
+        config="deepspeed_config.json" # Provide path to config used during training
     )
     print("DeepSpeed engine initialized.")
 
