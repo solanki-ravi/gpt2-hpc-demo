@@ -133,7 +133,12 @@ deployment_groups:
       allow_automatic_updates: false
       # Need to install NVIDIA drivers
       metadata:
-        install-nvidia-driver: true
+        startup-script: |
+          #!/bin/bash
+          echo "Running startup script to install build tools..."
+          apt-get update -y
+          apt-get install -y build-essential ninja-build
+          echo "Finished installing build tools."
       # Specify COS image family for GPU nodes
 
   - id: g2_gpu_partition
