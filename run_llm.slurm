@@ -24,17 +24,6 @@ echo "Running in directory: $(pwd)"
 # Or use virtualenv:
 # source /shared/home/ubuntu/my_venv/bin/activate
 
-# --- Attempt to install build tools for DeepSpeed Optimizers ---
-echo "Attempting to install build-essential and ninja-build..."
-echo "NOTE: This requires sudo access on compute nodes and may fail."
-sudo apt-get update -y && sudo apt-get install -y build-essential ninja-build
-if [ $? -ne 0 ]; then
-    echo "WARNING: Failed to install build tools. DeepSpeed optimizer compilation might fail."
-else
-    echo "Build tools installed successfully (or were already present)."
-fi
-# ----------------------------------------------------------------
-
 # Install dependencies on each node (only runs once per node allocation)
 # Using srun ensures pip runs in parallel across nodes if needed, 
 # but typically dependencies are shared via the filesystem (/home/ubuntu)
