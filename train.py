@@ -25,7 +25,7 @@ args = parse_args()
 
 # Configuration (now mostly from args)
 SEQ_LEN = 1024
-BATCH_SIZE = 2 # Align with train_micro_batch_size_per_gpu in DeepSpeed config
+BATCH_SIZE = 4 # Align with train_micro_batch_size_per_gpu in DeepSpeed config
 EPOCHS = args.epochs # Use arg
 MODEL_NAME = "gpt2"
 save_directory = args.checkpoint_dir # Use arg
