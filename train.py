@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from transformers import GPT2Config, GPT2LMHeadModel, GPT2TokenizerFast
@@ -65,8 +66,8 @@ config = GPT2Config(
 )
 model = GPT2LMHeadModel(config)
 
-# Define Optimizer
-optimizer = DeepSpeedCPUAdam(model.parameters(), lr=1e-5)
+# Define Optimizer - Use standard AdamW
+optimizer = optim.AdamW(model.parameters(), lr=1e-5)
 
 # DeepSpeed init
 # Initializes Distributed Process Group
