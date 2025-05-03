@@ -71,6 +71,44 @@ sbatch --export=ALL,EPOCHS=3,DATA_PERCENTAGE=25,CHECKPOINT_DIR="/fsx/my_training
 *   Check output: `cat slurm-<job_id>.out`
 *   Check errors: `cat slurm-<job_id>.err`
 
+## Inference (`inference.py`)
+
+An `inference.py` script is provided to load a trained DeepSpeed checkpoint and generate text based on a prompt.
+
+**Prerequisites:**
+
+*   Ensure Python dependencies are installed (`pip3 install --user -r requirements.txt`).
+*   Have access to a saved DeepSpeed checkpoint directory (e.g., `./my_gpt2_checkpoint/global_step65110`).
+*   Ensure `deepspeed_config.json` used during training is present in the current directory (as the inference script uses it to initialize the model engine structure for loading).
+*   If running on GPU, ensure drivers and CUDA are set up.
+*   If using DeepSpeed CPUAdam/Offloading during training, the inference environment might still need build tools (`ninja-build`, `python38-devel`, `gcc-toolset-12`) installed, although inference is often done without DeepSpeed optimizations active.
+
+**Usage:**
+
+```bash
+python3 inference.py <path_to_checkpoint_tag_directory> [options]
+```
+
+**Arguments:**
+
+*   `checkpoint_dir` (Positional): The full path to the *specific checkpoint tag directory* you want to load (e.g., `./my_gpt2_checkpoint/global_step65110`).
+*   `--prompt` (Optional): The starting text prompt.
+    *   Default: `"DeepSpeed is"`
+*   `--model_name` (Optional): Base model name for loading the tokenizer.
+    *   Default: `gpt2`
+*   `--device` (Optional): Device to run on (`cuda:0`, `cpu`, etc.).
+    *   Default: `cuda:0` if available, else `cpu`.
+*   `--max_new_tokens` (Optional): Max number of tokens to generate after the prompt.
+    *   Default: `50`
+
+**Example:**
+
+```bash
+python3 inference.py my_gpt2_checkpoint/global_step65110 --prompt "The future of AI is"
+```
+
+This command will load the specified checkpoint, initialize the DeepSpeed engine using `deepspeed_config.json`, generate text based on the prompt, and print the result.
+
 ## Cluster Management Script (`manage_cluster.sh`)
 
 A helper script `manage_cluster.sh` is provided to simplify creating and destroying the cluster using the HPC Toolkit.

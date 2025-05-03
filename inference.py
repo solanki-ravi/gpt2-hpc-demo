@@ -33,28 +33,49 @@ def main():
 
     # --- Instantiate Model ---
     print(f"Instantiating base model...")
-    # Note: Using low_cpu_mem_usage=True with DeepSpeed ZeRO can sometimes cause issues
-    # if parameters are not properly gathered before loading. We load on CPU first.
     model = GPT2LMHeadModel(config)
     print(f"Base model instantiated on CPU.")
 
-    # --- Load Checkpoint ---
-    print(f"Loading model weights from checkpoint: {args.checkpoint_dir}")
-    # Use DeepSpeed's utility to load the checkpoint.
-    # `load_module_only=True` ensures only model weights are loaded, not optimizer states.
-    # The model state dict is loaded directly into the `model` instance provided.
-    load_path, client_states = deepspeed.load_checkpoint(
-        args.checkpoint_dir,
-        load_module_only=True,
-        client_state={'module': model} # Pass the model instance here
+    # --- Initialize DeepSpeed Engine (needed for loading) ---
+    # Use the training config to ensure model structure/ZeRO info is available
+    # Minimal inference config might work if not loading ZeRO state, but using
+    # the training config is safer for checkpoint compatibility.
+    # Note: This will initialize distributed backend if run via torchrun/deepspeed launcher
+    # but should work for single process loading too.
+    # If running only on CPU for inference, adjust config accordingly.
+    print("Initializing DeepSpeed engine for loading...")
+    model_engine, optimizer, _, _ = deepspeed.initialize(
+        model=model,
+        config="deepspeed_config.json" # Provide path to config used during training
     )
-    # No need to explicitly load state dict, deepspeed.load_checkpoint handles it.
+    print("DeepSpeed engine initialized.")
+
+    # --- Load Checkpoint using the Engine ---
+    # Checkpoint dir is the base (e.g., ./my_gpt2_checkpoint)
+    # The tag is the specific sub-directory (e.g., global_step65110)
+    checkpoint_tag = args.checkpoint_dir.split('/')[-1] # Assumes last part is tag
+    base_checkpoint_dir = "/".join(args.checkpoint_dir.split('/')[:-1]) # Get base dir
+    if not base_checkpoint_dir:
+        base_checkpoint_dir = "." # Handle case where only tag is given
+
+    print(f"Loading model weights from checkpoint tag: {checkpoint_tag} in dir: {base_checkpoint_dir}")
+    load_path = model_engine.load_checkpoint(
+        base_checkpoint_dir,
+        tag=checkpoint_tag,
+        load_optimizer_states=False, # Don't load optimizer state for inference
+        load_lr_scheduler_states=False # Don't load scheduler state for inference
+    )
+
+    if load_path is None:
+        raise ValueError(f"Failed to load checkpoint {checkpoint_tag} from {base_checkpoint_dir}")
+
     print(f"Successfully loaded model weights from {load_path}")
 
-
     # --- Prepare Model for Inference ---
-    model.eval()
-    model.to(args.device)
+    # Use the model extracted from the DeepSpeed engine
+    model_to_use = model_engine.module
+    model_to_use.eval()
+    model_to_use.to(args.device)
     print(f"Model moved to device: {args.device} and set to evaluation mode.")
 
     # --- Tokenize Prompt ---
@@ -64,7 +85,7 @@ def main():
     # --- Generate Text ---
     print(f"Generating text...")
     with torch.no_grad(): # Disable gradient calculations for inference
-        outputs = model.generate(
+        outputs = model_to_use.generate(
             inputs['input_ids'],
             attention_mask=inputs['attention_mask'], # Pass attention mask
             max_new_tokens=args.max_new_tokens,
