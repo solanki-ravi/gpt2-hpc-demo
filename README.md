@@ -92,7 +92,7 @@ python3 inference.py <path_to_checkpoint_tag_directory> [options]
 **Arguments:**
 
 *   `checkpoint_dir` (Positional): The full path to the *specific checkpoint tag directory* you want to load (e.g., `./my_gpt2_checkpoint/global_step65110`).
-*   `--prompt` (Optional): The starting text prompt.
+*   `--prompt` (Optional): The starting text prompt. Remember to use quotes if the prompt contains spaces.
     *   Default: `"DeepSpeed is"`
 *   `--model_name` (Optional): Base model name for loading the tokenizer.
     *   Default: `gpt2`
@@ -101,10 +101,14 @@ python3 inference.py <path_to_checkpoint_tag_directory> [options]
 *   `--max_new_tokens` (Optional): Max number of tokens to generate after the prompt.
     *   Default: `50`
 
-**Example:**
+**Examples:**
 
 ```bash
-python3 inference.py my_gpt2_checkpoint/global_step65110 --prompt "The future of AI is"
+# Run with default prompt ("DeepSpeed is")
+python3 inference.py my_gpt2_checkpoint/global_step65110
+
+# Run with a custom prompt
+python3 inference.py my_gpt2_checkpoint/epoch_end_1 --prompt "The future of AI is"
 ```
 
 This command will load the specified checkpoint, initialize the DeepSpeed engine using `deepspeed_config.json`, generate text based on the prompt, and print the result.
