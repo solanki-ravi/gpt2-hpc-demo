@@ -4,6 +4,46 @@
 
 ![Architecture Diagram](images/architecture.png)
 
+## Setup
+
+Follow these steps to set up the environment and deploy the initial cluster:
+
+1.  **Set Project ID:** Define your Google Cloud project ID.
+    ```bash
+    export project_id=<Your GCP ProjectId>
+    ```
+
+2.  **Clone and Build HPC Toolkit:**
+    ```bash
+    git clone https://github.com/GoogleCloudPlatform/cluster-toolkit.git
+    cd cluster-toolkit/
+    make
+    # Verify build
+    ./gcluster --version 
+    # Go back to the parent directory or your workspace root
+    cd .. 
+    ```
+
+3.  **Clone Project Repository:**
+    ```bash
+    git clone https://github.com/solanki-ravi/gpt2-hpc-demo.git
+    cd gpt2-hpc-demo
+    ```
+
+4.  **Create Cluster Deployment Directory:** (Ensure you are inside the `gp2demo` directory)
+    ```bash
+    # The ./gcluster command assumes you are running from the gpt2-hpc-demo directory
+    # and the cluster-toolkit repo (containing gcluster) is one level up.
+    # Adjust the path to gcluster if necessary.
+    ../cluster-toolkit/gcluster create hpc-slurm.yaml \
+        -l ERROR --vars project_id=$project_id
+    ```
+
+5.  **Deploy Cluster Resources:** (Replace deployment name if different from blueprint)
+    ```bash
+    ../cluster-toolkit/gcluster deploy hpc-slurm-gpt2demo-gpu-g2-deepspeed
+    ```
+
 This project contains scripts to train a GPT-2 language model using DeepSpeed for efficient distributed training on a Slurm cluster managed by the Google Cloud HPC Toolkit.
 
 For more information about GCP HPC Clusters, please refer to: https://cloud.google.com/solutions/hpc?hl=en
