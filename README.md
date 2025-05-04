@@ -228,6 +228,7 @@ Maximizing MFU means getting the most computational throughput from your GPUs. H
         export NCCL_DEBUG=INFO 
         # (or NCCL_DEBUG=WARN for less verbose output)
 
+## Author / Contact: Ravi Solanki (github.com/solanki-ravi)
         scl enable gcc-toolset-12 -- \
         srun --label python3 ...
         ```
