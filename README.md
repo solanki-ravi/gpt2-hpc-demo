@@ -188,35 +188,47 @@ The current configuration requests and assumes a single GPU per node (`g2-standa
         ```
     *   If you don't adjust this, your global batch size will increase proportionally to the number of GPUs.
    
-## Optimizations:
-Apply the following optimizations to maximize MFU.
+## Optimizations to Maximize MFU (Model Flops Utilization)
 
-### Batch size:
+Maximizing MFU means getting the most computational throughput from your GPUs. Here are key areas to optimize:
 
-1. **Adjust `train_micro_batch_size_per_gpu`:**
+1.  **Tune Micro-Batch Size (`train_micro_batch_size_per_gpu`):**
+    *   This is often the most impactful parameter for MFU.
+    *   Find the largest micro-batch size that fits into your GPU memory (e.g., 22GB on L4) without causing Out-Of-Memory (OOM) errors. Monitor GPU memory using `nvidia-smi` during training.
+    *   Increase this value incrementally (e.g., from 2 to 4, maybe 6) in `deepspeed_config.json`.
+    *   Remember to **decrease** `gradient_accumulation_steps` proportionally to maintain the desired `train_global_batch_size`.
+    *   You also need to **match** the `BATCH_SIZE` variable in `train.py` to the chosen `train_micro_batch_size_per_gpu`.
 
-   ```
-   nvidia-smi 
-   Sat May  3 16:50:52 2025       
-   +-----------------------------------------------------------------------------------------+
-   | NVIDIA-SMI 550.90.12              Driver Version: 550.90.12      CUDA Version: 12.4     |
-   |-----------------------------------------+------------------------+----------------------+
-   | GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
-   | Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
-   |                                         |                        |               MIG M. |
-   |=========================================+========================+======================|
-   |   0  NVIDIA L4                      On  |   00000000:00:03.0 Off |                    0 |
-   | N/A   76C    P0             62W /   72W |    6483MiB /  23034MiB |     82%      Default |
-   |                                         |                        |                  N/A |
-   +-----------------------------------------+------------------------+----------------------+
-                                                                                            
-   +-----------------------------------------------------------------------------------------+
-   | Processes:                                                                              |
-   |  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
-   |        ID   ID                                                               Usage      |
-   |=========================================================================================|
-   |    0   N/A  N/A      2156      C   /usr/bin/python3                             6474MiB |
-   +-----------------------------------------------------------------------------------------+
+2.  **Leverage Mixed Precision (FP16/BF16):**
+    *   FP16 is enabled (`"fp16": {"enabled": true}`) in the current `deepspeed_config.json` and is crucial for performance on L4 GPUs (utilizes Tensor Cores).
+    *   If you encounter numerical stability issues (NaN loss), consider fine-tuning FP16 loss scaling parameters in the DeepSpeed config or switching to BF16 (if supported and desired).
 
-   train_micro_batch_size_per_gpu = 2 > train_micro_batch_size_per_gpu = 6
-   ```
+3.  **Optimize Data Pipeline (`DataLoader` in `train.py`):**
+    *   Increase `num_workers` in the `DataLoader` (e.g., `num_workers=4` or `8`) to load data in parallel using CPU processes, preventing the GPU from waiting.
+    *   Add `pin_memory=True` to the `DataLoader` arguments to speed up CPU-to-GPU data transfers.
+
+4.  **Consider Activation Checkpointing:**
+    *   If memory limits prevent further increases in micro-batch size, use activation checkpointing (gradient checkpointing).
+    *   This trades increased computation (recalculating activations during backward pass) for significantly lower memory usage, potentially allowing larger batches and higher MFU.
+    *   Configure this in `deepspeed_config.json` (refer to DeepSpeed documentation for details).
+
+5.  **Utilize Fused Kernels (Requires Build Tools):**
+    *   DeepSpeed offers optimized CUDA kernels (e.g., FusedAdam) that can improve performance by reducing kernel launch overhead.
+    *   These often require compiling C++ extensions during initialization.
+    *   If you have successfully installed all build prerequisites on compute nodes (`ninja-build`, `python38-devel`, correct `gcc` version via `scl enable`), DeepSpeed may automatically use these when applicable (e.g., with FP16 enabled).
+
+6.  **High-Bandwidth Networking (gVNIC):**
+    *   Google Virtual NIC (gVNIC) provides higher network bandwidth compared to the default VirtIO-Net, crucial for efficient gradient synchronization (all-reduce) in multi-node training.
+    *   Your `hpc-slurm.yaml` already enables this for the `g2_gpu_nodeset` via `bandwidth_tier: gvnic_enabled`.
+
+7.  **Diagnose Communication with `NCCL_DEBUG`:**
+    *   If you suspect networking or inter-GPU communication bottlenecks (especially in multi-node setups), use NCCL debugging.
+    *   Export the environment variable in your `run_llm.slurm` script *before* the `srun` command:
+        ```bash
+        export NCCL_DEBUG=INFO 
+        # (or NCCL_DEBUG=WARN for less verbose output)
+
+        scl enable gcc-toolset-12 -- \
+        srun --label python3 ...
+        ```
+    *   This will print detailed information about NCCL operations (initialization, communicator setup, data transfers) to the job's output/error files, helping identify communication issues.
