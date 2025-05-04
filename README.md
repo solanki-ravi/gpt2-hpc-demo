@@ -1,5 +1,9 @@
 # GPT-2 Training with DeepSpeed on Slurm and GCP HPC Clusters
 
+## Architecture
+
+![Architecture Diagram](images/architecture.png)
+
 This project contains scripts to train a GPT-2 language model using DeepSpeed for efficient distributed training on a Slurm cluster managed by the Google Cloud HPC Toolkit.
 
 For more information about GCP HPC Clusters, please refer to: https://cloud.google.com/solutions/hpc?hl=en
