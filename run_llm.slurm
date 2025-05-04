@@ -5,7 +5,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --gpus-per-node=1         # Request 1 GPUs per node (matches g2-standard-4)
 #SBATCH --cpus-per-task=2         # Adjust based on instance type and data loading needs
-#SBATCH --time=06:00:00           # Adjust job time limit as needed
+#SBATCH --time=48:00:00           # Adjust job time limit as needed
 #SBATCH --partition=g2gpu         # Matches the queue name in cluster-config.yaml
 #SBATCH --output=slurm-%j.out     # Standard output file
 #SBATCH --error=slurm-%j.err      # Standard error file

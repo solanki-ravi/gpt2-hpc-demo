@@ -115,11 +115,11 @@ This command will load the specified checkpoint, initialize the DeepSpeed engine
 
 ## Cluster Management Script (`manage_cluster.sh`)
 
-A helper script `manage_cluster.sh` is provided to simplify creating and destroying the cluster using the HPC Toolkit.
+A helper script `manage_cluster.sh` is provided to simplify creating and destroying the cluster using the HPC Toolkit (`gcluster` command).
 
 **Prerequisites:**
 
-*   Ensure the `ghpc` executable is in your current directory or PATH.
+*   Ensure the `gcluster` executable (built from the HPC Toolkit repo) is in your current directory or PATH.
 *   Ensure the blueprint file (`hpc-slurm.yaml`) is in the current directory.
 *   Make the script executable:
     ```bash
@@ -132,15 +132,24 @@ A helper script `manage_cluster.sh` is provided to simplify creating and destroy
 
 **Usage:**
 
-*   **Create Cluster:**
+*   **Create Deployment Directory:**
     ```bash
     ./manage_cluster.sh create <your_deployment_name>
     ```
     *(Replace `<your_deployment_name>` with the `deployment_name` from `hpc-slurm.yaml`, e.g., `hpc-slurm-gpt2demo-gpu-g2-deepspeed`)*
 
+*   **Deploy Cluster Resources:**
+    ```bash
+    ./manage_cluster.sh deploy <your_deployment_name>
+    ```
+
 *   **Destroy Cluster:**
     ```bash
+    # Without auto-approve (will prompt)
     ./manage_cluster.sh destroy <your_deployment_name>
+
+    # With auto-approve
+    ./manage_cluster.sh destroy <your_deployment_name> --auto-approve
     ```
     *(Replace `<your_deployment_name>` accordingly)*
 
@@ -150,7 +159,7 @@ The current configuration requests and assumes a single GPU per node (`g2-standa
 
 1.  **Modify `hpc-slurm.yaml`:**
     *   Change the `machine_type` for the relevant nodeset (e.g., `g2_gpu_nodeset`) to a multi-GPU instance type (e.g., `a2-highgpu-4g`).
-    *   Redeploy the cluster infrastructure using the HPC Toolkit (`./ghpc deploy ...`) for the change to take effect.
+    *   Redeploy the cluster infrastructure using the HPC Toolkit (`./gcluster deploy ...`) for the change to take effect.
 
 2.  **Modify `run_llm.slurm`:**
     *   Update the SBATCH directive to request the correct number of GPUs per node. For example, for a 4-GPU node:
