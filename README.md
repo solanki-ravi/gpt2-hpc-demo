@@ -1,5 +1,15 @@
 # Small GPT-2 model training on GCP HPC Cluster using DeepSpeed and Slurm controller.
 
+This project provides a reference architecture for distributed training Google Cloud HPC using the Slurm controller.
+
+We pre-train a reference GPT-2 language model using DeepSpeed [_ZeRO Stage 2 with CPU Optimizer Offload, more configurations can be tested_](https://deepspeed.readthedocs.io/en/latest/zero3.html#zero-configurations) for efficient distributed training on a Slurm cluster managed by the Google Cloud HPC Toolkit.
+
+For more information about GCP HPC Clusters, please refer to [GCP documentation](https://cloud.google.com/solutions/hpc?hl=en)
+For a tutorial on GCP HPC Cluster with Slurm, please this [tutorial](https://codelabs.developers.google.com/codelabs/hpc-slurm-on-gcp#0)
+For more information on DeepSpeed ZeRO Stage 2, refer [here](https://www.microsoft.com/en-us/research/blog/ZeRO-2-deepspeed-shattering-barriers-of-deep-learning-speed-scale/).
+
+The model was trained on a [g2-standard-4](https://cloud.google.com/compute/docs/gpus/#l4-gpus) cluster instances (NVIDIA L4s), and can easily be launched on more powerful instances on GCP, by deifining the appropriate nodesets (hpc-slurm.yaml).
+
 ## Architecture
 
 ![Architecture Diagram](images/architecture.png)
@@ -44,17 +54,6 @@ Follow these steps to set up the environment and deploy the initial cluster:
     ../cluster-toolkit/gcluster deploy hpc-slurm-gpt2demo-gpu-g2-deepspeed
     ```
 
-This project contains scripts to train a GPT-2 language model using DeepSpeed for efficient distributed training on a Slurm cluster managed by the Google Cloud HPC Toolkit.
-
-For more information about GCP HPC Clusters, please refer to: https://cloud.google.com/solutions/hpc?hl=en
-For a tutorial on GCP HPC Cluster with Slurm, please refer to: https://codelabs.developers.google.com/codelabs/hpc-slurm-on-gcp#0
-
-For information on the training architecture, please refer to the following diagram.
-
-The model was trained on 8 g2-standard-4 cluster instances (NVIDIA L4s). More information on GCP G4 instances can be found here: https://cloud.google.com/compute/docs/gpus/#l4-gpus
-
-The model could easily be launched on more powerful H{1|2}00 instances on GCP, by defiing the appropriate node configuration (hpc-slurm.yaml).
-
 ## Files
 
 *   `train.py`: The main Python script for loading data, configuring the model, and running the training loop using DeepSpeed.
@@ -63,18 +62,16 @@ The model could easily be launched on more powerful H{1|2}00 instances on GCP, b
 *   `requirements.txt`: Lists the required Python packages.
 *   `hpc-slurm.yaml`: The HPC Toolkit blueprint defining the Slurm cluster infrastructure (nodesets, partitions, controller, etc.).
 
-## Prerequisites
+## Prerequisites / System Dependencies on Compute Nodes:
 
-1.  **HPC Cluster:** A Slurm cluster deployed using the HPC Toolkit (based on `hpc-slurm.yaml`).
-2.  **Shared Filesystem:** A shared filesystem (like NFS or Filestore, defined as `homefs` in `hpc-slurm.yaml`) mounted at `/home` (or adjusted paths in scripts) accessible by the login node and compute nodes.
-3.  **Code:** Clone or copy this project directory to the shared filesystem.
-4.  **System Dependencies on Compute Nodes:** The compute nodes in the target partition (e.g., `g2gpu`) need the following system packages installed (using `sudo dnf install -y ...` on Rocky Linux 8):
+The compute nodes in the target partition (e.g., `g2gpu`) need the following system packages installed (using `sudo dnf install -y ...` on Rocky Linux 8):
     *   `ninja-build`
     *   `python38-devel` (or the version matching the Python used)
     *   `"Development Tools"` package group (for `g++`, `make`)
     *   `gcc-toolset-12` (or the version required by the PyTorch/DeepSpeed build)
     *(Manual installation via SSH is currently required as per the setup steps)*
-5.  **Python Dependencies:** Install the Python packages on the login node (and potentially within the job using the script) in your user environment:
+    
+**Python Dependencies:** Install the Python packages on the login node (and potentially within the job using the script) in your user environment:
     ```bash
     pip3 install --user -r requirements.txt
     ```
