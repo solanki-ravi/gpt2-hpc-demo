@@ -1,4 +1,4 @@
-# Small GPT-2 model training on GCP HPC Cluster using DeepSpeed DDP and Slurm controller.
+# Small GPT-2 model training on GCP HPC Cluster using DeepSpeed and Slurm controller.
 
 ## Architecture
 
