@@ -8,7 +8,7 @@ For more information about GCP HPC Clusters, please refer to [GCP documentation]
 For a tutorial on GCP HPC Cluster with Slurm, please this [tutorial](https://codelabs.developers.google.com/codelabs/hpc-slurm-on-gcp#0)
 For more information on DeepSpeed ZeRO Stage 2, refer [here](https://www.microsoft.com/en-us/research/blog/ZeRO-2-deepspeed-shattering-barriers-of-deep-learning-speed-scale/).
 
-The model was trained on a [g2-standard-4](https://cloud.google.com/compute/docs/gpus/#l4-gpus) cluster instances (NVIDIA L4s), and can easily be launched on more powerful instances on GCP, by deifining the appropriate nodesets (hpc-slurm.yaml).
+The model was trained on a [g2-standard-4](https://cloud.google.com/compute/docs/gpus/#l4-gpus) cluster instances (NVIDIA L4s), and can easily be launched on more powerful instances on GCP, by defining the appropriate nodesets (hpc-slurm.yaml).
 
 ## Architecture
 
