@@ -2,7 +2,7 @@
 
 This project provides a reference architecture for distributed training Google Cloud HPC using the Slurm controller.
 
-We pre-train a reference GPT-2 language model using DeepSpeed [_ZeRO Stage 2 with CPU Optimizer Offload, more configurations can be tested_](https://deepspeed.readthedocs.io/en/latest/zero3.html#zero-configurations) for efficient distributed training on a Slurm cluster managed by the Google Cloud HPC Toolkit.
+We pre-train a reference GPT-2 language model using DeepSpeed [_ZeRO Stage 2 with CPU Optimizer Offload](https://deepspeed.readthedocs.io/en/latest/zero3.html#zero-configurations) for efficient distributed training on a Slurm cluster managed by the Google Cloud HPC Toolkit.
 
 For more information about GCP HPC Clusters, please refer to [GCP documentation](https://cloud.google.com/solutions/hpc?hl=en)
 For a tutorial on GCP HPC Cluster with Slurm, please this [tutorial](https://codelabs.developers.google.com/codelabs/hpc-slurm-on-gcp#0)
