@@ -56,9 +56,7 @@ echo "MASTER_PORT: $MASTER_PORT"
 
 # --- Run the Training Script ---
 # torchrun handles rank assignment based on srun context
-# Remove --node_rank and potentially unnecessary --deepspeed flag
 echo "Launching training..."
-# Use python3 -m torch.distributed.run instead of just torchrun
 # --- Enable GCC Toolset 12 for compilation --- 
 echo "Enabling GCC Toolset 12 for Python execution..."
 scl enable gcc-toolset-12 -- \
